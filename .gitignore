@@ -1,0 +1,18 @@
+# OS Metadata
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Text Editor / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Local Server Logs
+*.log
+python_server.log
+
+# Temporary files
+*.tmp
+*.bak

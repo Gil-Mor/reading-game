@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Magisches Leseabenteuer</title>
+    <style>
+        body {
+            background-color: #ffe5d9;
+            font-family: 'Comic Sans MS', 'Verdana', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            color: #4a4a4a;
+            overflow: hidden;
+        }
+
+        #app-wrapper {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* --- Menu Styles --- */
+        #menu-container {
+            background-color: #ffffff;
+            border-radius: 15px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.05);
+            width: 80%;
+            max-width: 600px;
+            padding: 40px;
+            text-align: center;
+            border: 4px solid #ffbfae;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        #menu-container h1 {
+            color: #ff9b85;
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+
+        .story-btn {
+            padding: 15px 25px;
+            font-size: 22px;
+            background-color: #ffe066; /* Pastel yellow */
+            border: 2px solid #f4d03f;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: inherit;
+            color: #5a5a5a;
+            transition: transform 0.1s, background-color 0.2s;
+            width: 100%;
+        }
+
+        .story-btn:hover {
+            background-color: #f4d03f;
+            transform: scale(1.02);
+        }
+
+        /* --- Book Styles --- */
+        #book-container {
+            background-color: #ffffff;
+            border-radius: 15px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.05);
+            width: 80%;
+            max-width: 800px;
+            height: 60vh;
+            padding: 40px;
+            position: relative;
+            display: none; /* Hidden until a story is chosen */
+            flex-direction: column;
+            justify-content: center;
+            border: 4px solid #ffbfae;
+            z-index: 1;
+        }
+
+        /* --- Dynamic Image Styles --- */
+        .decoration {
+            position: absolute;
+            max-width: 150px;
+            max-height: 150px;
+            object-fit: contain;
+            opacity: 0;
+            transition: opacity 1s ease-in;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        #app-wrapper.loaded .decoration {
+            opacity: 1;
+        }
+
+        #img-1 { top: 50px; left: 50px; }
+        #img-2 { top: 70px; right: 50px; }
+        #img-3 { bottom: 60px; right: 60px; }
+        #img-4 { bottom: 40px; left: 60px; }
+        #img-5 { top: 40%; left: 30px; }
+
+        #timer {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            font-size: 16px;
+            color: #a0a0a0;
+            font-weight: normal;
+            transition: color 0.3s ease;
+        }
+
+        #page-text {
+            font-size: 28px;
+            line-height: 1.6;
+            text-align: center;
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        #page-number {
+            text-align: center;
+            font-size: 18px;
+            color: #b0c4de;
+            margin-top: 20px;
+            min-height: 24px;
+        }
+
+        #instructions {
+            position: absolute;
+            bottom: 10px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            font-size: 14px;
+            color: #d3d3d3;
+            min-height: 20px;
+        }
+
+        .action-btn {
+            margin-top: 30px;
+            padding: 12px 24px;
+            font-size: 20px;
+            background-color: #d4edda;
+            border: 2px solid #c3e6cb;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: inherit;
+            color: #155724;
+            transition: background-color 0.2s;
+        }
+
+        .action-btn:hover {
+            background-color: #c3e6cb;
+        }
+
+        .menu-return-btn {
+            background-color: #a0d2eb;
+            border-color: #8cbcd6;
+            color: #3a5a6b;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app-wrapper">
+        <!-- Main Menu -->
+        <div id="menu-container">
+            <h1>Was möchtest du lesen? 📖</h1>
+            <div id="story-list">Lade Geschichten...</div>
+        </div>
+
+        <!-- The Book -->
+        <div id="book-container">
+            <div id="timer">10:00</div>
+            <div id="page-text">Lade...</div>
+            <div id="page-number"></div>
+            <div id="instructions">Benutze die Pfeiltasten (← / →) oder Enter zum Umblättern</div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // KONFIGURATION
+        // ==========================================
+        const CONFIG = {
+            timerMinutes: 10,          // Time limit in minutes
+            imageExtension: ".png"     // e.g., ".png", ".jpg", ".gif"
+        };
+        // ==========================================
+
+        let currentStoryId = "";
+        let storyPages = [];
+        let currentPage = -1;
+        let timeLeft = CONFIG.timerMinutes * 60;
+        let timerInterval;
+        let gameActive = false;
+
+        let isPaused = false;
+        let isOvertime = false;
+        let overtimeSeconds = 0;
+
+        const menuContainerEl = document.getElementById('menu-container');
+        const storyListEl = document.getElementById('story-list');
+        const bookContainerEl = document.getElementById('book-container');
+        const pageTextEl = document.getElementById('page-text');
+        const pageNumberEl = document.getElementById('page-number');
+        const timerEl = document.getElementById('timer');
+        const instructionsEl = document.getElementById('instructions');
+        const appWrapperEl = document.getElementById('app-wrapper');
+
+        // 1. Fetch the JSON menu file on load
+        async function loadMenu() {
+            try {
+                const response = await fetch('stories.json');
+                if (!response.ok) throw new Error("Konnte stories.json nicht finden.");
+
+                const stories = await response.json();
+                storyListEl.innerHTML = ""; // Clear loading text
+
+                stories.forEach(story => {
+                    const btn = document.createElement('button');
+                    btn.className = 'story-btn';
+                    btn.innerText = story.title;
+                    btn.onclick = () => selectStory(story.id);
+                    storyListEl.appendChild(btn);
+                });
+            } catch (error) {
+                console.error(error);
+                storyListEl.innerHTML = `Fehler beim Laden:<br><i>${error.message}</i>`;
+            }
+        }
+
+        // 2. Handle story selection
+        function selectStory(storyId) {
+            currentStoryId = storyId;
+            menuContainerEl.style.display = 'none';
+            bookContainerEl.style.display = 'flex';
+            loadStoryData(storyId);
+        }
+
+        // 3. Fetch specific story and images
+        async function loadStoryData(folderId) {
+            // Reset state
+            storyPages = [];
+            currentPage = -1;
+            timeLeft = CONFIG.timerMinutes * 60;
+            isPaused = false;
+            isOvertime = false;
+            overtimeSeconds = 0;
+            gameActive = false;
+            clearInterval(timerInterval);
+            timerEl.style.color = "#a0a0a0";
+            appWrapperEl.classList.remove('loaded');
+
+            // Remove old images if they exist
+            document.querySelectorAll('.decoration').forEach(e => e.remove());
+
+            try {
+                const response = await fetch(`stories/${folderId}/story.txt`);
+                if (!response.ok) throw new Error("Textdatei konnte nicht gefunden werden.");
+
+                const text = await response.text();
+                storyPages = text.split(/\r?\n\r?\n/).filter(page => page.trim() !== "");
+
+                if (storyPages.length === 0) throw new Error("Die Datei ist leer.");
+
+                loadImages(folderId);
+
+                timerEl.innerText = formatTime(timeLeft);
+                pageTextEl.innerText = "Drücke Enter oder die Pfeiltaste nach rechts, um zu beginnen!";
+                instructionsEl.innerText = "Benutze die Pfeiltasten (← / →) oder Enter zum Umblättern";
+                pageNumberEl.innerText = "";
+
+                setTimeout(() => {
+                    appWrapperEl.classList.add('loaded');
+                }, 300);
+
+            } catch (error) {
+                console.error(error);
+                pageTextEl.innerHTML = `Fehler beim Laden:<br><i>${error.message}</i>`;
+                timerEl.innerText = "";
+            }
+        }
+
+        function loadImages(folderId) {
+            for (let i = 1; i <= 5; i++) {
+                const img = document.createElement('img');
+                img.src = `stories/${folderId}/drawings/${i}${CONFIG.imageExtension}`;
+                img.id = `img-${i}`;
+                img.className = 'decoration';
+
+                img.onerror = function() {
+                    this.style.display = 'none';
+                };
+
+                appWrapperEl.insertBefore(img, bookContainerEl);
+            }
+        }
+
+        function formatTime(seconds) {
+            const m = Math.floor(seconds / 60);
+            const s = seconds % 60;
+            return `${m}:${s < 10 ? '0' : ''}${s}`;
+        }
+
+        function updateTimer() {
+            if (!isOvertime) {
+                if (timeLeft > 0) {
+                    timeLeft--;
+                    timerEl.innerText = formatTime(timeLeft);
+                }
+                if (timeLeft === 0 && !isPaused) {
+                    showTimeUpScreen();
+                }
+            } else {
+                overtimeSeconds++;
+                timerEl.innerText = "+" + formatTime(overtimeSeconds);
+            }
+        }
+
+        function startTimer() {
+            if (!gameActive) {
+                gameActive = true;
+                timerInterval = setInterval(updateTimer, 1000);
+            }
+        }
+
+        function showTimeUpScreen() {
+            clearInterval(timerInterval);
+            isPaused = true;
+
+            let finalPageReached = currentPage + 1;
+            if (currentPage === -1) finalPageReached = 0;
+
+            pageTextEl.innerHTML = `
+                <div>Die Zeit ist um! ⏱️</div>
+                <br>
+                <div style="font-size: 24px;">Dein Ergebnis: Du bist bis <b>Seite ${finalPageReached}</b> gekommen.<br>Toll gemacht!</div>
+                <div>
+                    <button class="action-btn" onclick="continueReading()">Weiterlesen (Enter)</button>
+                    <button class="action-btn menu-return-btn" onclick="returnToMenu()">Zurück zum Menü</button>
+                </div>
+            `;
+            pageNumberEl.innerText = "";
+            instructionsEl.innerText = "";
+        }
+
+        window.continueReading = function() {
+            isPaused = false;
+            isOvertime = true;
+
+            timerEl.style.color = "#7ebd8b";
+            instructionsEl.innerText = "Benutze die Pfeiltasten (← / →) oder Enter zum Umblättern";
+
+            timerInterval = setInterval(updateTimer, 1000);
+            showPage(currentPage);
+        }
+
+        window.returnToMenu = function() {
+            clearInterval(timerInterval);
+            bookContainerEl.style.display = 'none';
+            menuContainerEl.style.display = 'flex';
+            document.querySelectorAll('.decoration').forEach(e => e.remove());
+        }
+
+        function finishBook() {
+            clearInterval(timerInterval);
+            gameActive = false;
+            pageTextEl.innerHTML = `
+                Du hast das ganze Buch gelesen! 🌟<br><br>Super gemacht!
+                <br><br>
+                <button class="action-btn menu-return-btn" onclick="returnToMenu()">Zurück zum Menü (Enter)</button>
+            `;
+            pageNumberEl.innerText = "";
+            instructionsEl.innerText = "";
+        }
+
+        function showPage(index) {
+            if (!gameActive && currentPage === -1 && !isPaused) {
+                startTimer();
+            }
+
+            if (index >= 0 && index < storyPages.length) {
+                currentPage = index;
+                pageTextEl.innerText = storyPages[currentPage];
+                pageNumberEl.innerText = `Seite ${currentPage + 1} von ${storyPages.length}`;
+            } else if (index >= storyPages.length) {
+                finishBook();
+            }
+        }
+
+        document.addEventListener('keydown', (event) => {
+            // Only allow keys if book container is visible
+            if (bookContainerEl.style.display === 'none') return;
+            if (storyPages.length === 0) return;
+
+            if (isPaused) {
+                if (event.key === 'Enter') {
+                    continueReading();
+                }
+                return;
+            }
+
+            // If finished book, Enter returns to menu
+            if (!gameActive && !isPaused && currentPage >= storyPages.length - 1) {
+                if (event.key === 'Enter') returnToMenu();
+                return;
+            }
+
+            if (event.key === 'Enter' || event.key === 'ArrowRight') {
+                if (currentPage < storyPages.length) {
+                    showPage(currentPage + 1);
+                }
+            } else if (event.key === 'ArrowLeft') {
+                if (currentPage > 0) {
+                    showPage(currentPage - 1);
+                }
+            }
+        });
+
+        // Start by loading the menu
+        window.onload = loadMenu;
+    </script>
+</body>
+</html>
