@@ -1,5 +1,6 @@
 [
     { "id": "zauberwald", "title": "Das Geheimnis im Zauberwald" },
     { "id": "ponyclub", "title": "Abenteuer im Ponyclub" },
-    { "id": "feenstaub", "title": "Die kleine Fee sucht Hilfe" }
+    { "id": "feenstaub", "title": "Die kleine Fee sucht Hilfe" },
+    { "id": "puppenhaus", "title": "Abenteuer im Mini-Puppenhaus" }
 ]
