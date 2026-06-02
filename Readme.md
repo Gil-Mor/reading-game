@@ -1,11 +1,11 @@
-# Magisches Leseabenteuer 🦄✨
+# Magical Reading Adventure / Magisches Leseabenteuer 🦄✨
 
-A simple, distraction-free reading web app designed for 2nd graders to practice German reading.
+A simple, distraction-free reading web app designed for helping kids to practice reading.
 
 **Live Demo:** [https://gil-mor.github.io/reading-game/](https://gil-mor.github.io/reading-game/)
 
 ## About this Project
-This app was "vibe-coded" with **Gemini** by **Gil Mor** and his 8-year-old child. It was built to make reading practice fun, interactive, and personalized.
+This app was "vibe-coded" by me and my daughter. It was built to make reading practice fun, interactive, and personalized.
 
 ### Features
 - **10-Minute Reading Challenge:** A gentle timer helps track progress without the pressure of "winning" or "losing."
@@ -26,3 +26,26 @@ Since the app fetches story data dynamically via JSON and text files, it require
    ```bash
    python -m http.server 8000
    ```
+
+---
+
+## Adding or Replacing Stories
+
+You can easily expand the library with your own adventures:
+
+1.  **Prepare the folder:** Create a new folder inside the `stories/` directory. Use a simple name without spaces (e.g., `der-kleine-drache`). This will be your **Story ID**.
+2.  **Write the story:** Inside your new folder, create a file named `story.txt`.
+    *   Write your story text here.
+    *   Use **two empty lines** (a double line break) to separate pages.
+3.  **Add illustrations (Optional):** Inside your story folder, create another folder named `drawings/`. Add up to 5 images named `1.png`, `2.png`, `3.png`, `4.png`, and `5.png`.
+4.  **Register the story:** Open `stories.json` in the root directory and add an entry for your new story:
+    ```json
+    {
+      "id": "der-kleine-drache",
+      "title": "Der kleine Drache lernt fliegen"
+    }
+    ```
+    *   The `id` must match your folder name exactly.
+    *   The `title` is what will appear on the main menu button.
+
+5.  **Refresh:** Reload the website to see your new story in the list!
