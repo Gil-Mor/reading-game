@@ -198,6 +198,41 @@
             color: #3a5a6b;
             margin-left: 10px;
         }
+
+        /* --- Mobile Responsiveness --- */
+        @media (max-width: 600px) {
+            #menu-container {
+                width: 90%;
+                padding: 20px;
+                max-height: 90vh;
+            }
+            #menu-container h1 {
+                font-size: 24px;
+                margin-bottom: 15px;
+            }
+            #story-list {
+                grid-template-columns: 1fr;
+                max-height: 70vh;
+            }
+            .story-btn {
+                font-size: 18px;
+                padding: 12px;
+                min-height: 60px;
+            }
+            #book-container {
+                width: 92%;
+                padding: 20px;
+                height: 70vh;
+            }
+            #page-text {
+                font-size: 22px;
+            }
+            .decoration {
+                max-width: 80px;
+                max-height: 80px;
+            }
+            #img-5 { display: none; }
+        }
     </style>
 </head>
 <body>
@@ -309,8 +344,8 @@
                 loadImages(folderId);
 
                 timerEl.innerText = formatTime(timeLeft);
-                pageTextEl.innerText = "Drücke Enter oder die Pfeiltaste nach rechts, um zu beginnen!";
-                instructionsEl.innerText = "Benutze die Pfeiltasten (← / →) oder Enter zum Umblättern";
+                pageTextEl.innerText = "Tippe auf den Bildschirm oder drücke Enter, um zu beginnen!";
+                instructionsEl.innerText = "Tippe oder benutze die Pfeiltasten zum Umblättern";
                 pageNumberEl.innerText = "";
 
                 setTimeout(() => {
@@ -392,7 +427,7 @@
             isOvertime = true;
 
             timerEl.style.color = "#7ebd8b";
-            instructionsEl.innerText = "Benutze die Pfeiltasten (← / →) oder Enter zum Umblättern";
+            instructionsEl.innerText = "Tippe oder benutze die Pfeiltasten zum Umblättern";
 
             timerInterval = setInterval(updateTimer, 1000);
             showPage(currentPage);
@@ -455,6 +490,15 @@
                 if (currentPage > 0) {
                     showPage(currentPage - 1);
                 }
+            }
+        });
+
+        // Add click/tap support for mobile users to turn pages
+        bookContainerEl.addEventListener('click', (event) => {
+            if (isPaused || event.target.closest('.action-btn')) return;
+
+            if (currentPage < storyPages.length) {
+                showPage(currentPage + 1);
             }
         });
 
